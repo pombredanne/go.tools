@@ -38,10 +38,22 @@ var sources = []string{
 	func h() Mode { return ImportsOnly }
 	var _, x int = 1, 2
 	func init() {}
-	type T struct{ sync.Mutex; a, b, c int}
-	type I interface{ m() }
-	var _ = T{a: 1, b: 2, c: 3}
+	type T struct{ a, b, c int}
+	type I interface { m() }
+    type J interface { I; n() }
+	var t = T{a: 1, b: 2, c: 3}
+    var pt *T = &t
+    var ta = t.a
 	func (_ T) m() {}
+	func (_ *T) pm() {}
+    func tm() { t.m() }
+    func pm() { pt.pm() }
+    var i I = t
+    func im() { i.m() }
+    type U struct { I }
+    var j J = U{i}
+    func (_ U) n() {}
+    func jmn() { j.m(); j.n() }
 	`,
 }
 
@@ -102,39 +114,6 @@ func TestResolveQualifiedIdents(t *testing.T) {
 					return false
 				}
 				return false
-			}
-			return true
-		})
-	}
-
-	// Currently, the Check API doesn't call Ident for fields, methods, and composite literal keys.
-	// Introduce them artifically so that we can run the check below.
-	for _, f := range files {
-		ast.Inspect(f, func(n ast.Node) bool {
-			switch x := n.(type) {
-			case *ast.StructType:
-				for _, list := range x.Fields.List {
-					for _, f := range list.Names {
-						assert(idents[f] == nil)
-						idents[f] = &Var{pkg: pkg, name: f.Name}
-					}
-				}
-			case *ast.InterfaceType:
-				for _, list := range x.Methods.List {
-					for _, f := range list.Names {
-						assert(idents[f] == nil)
-						idents[f] = &Func{pkg: pkg, name: f.Name}
-					}
-				}
-			case *ast.CompositeLit:
-				for _, e := range x.Elts {
-					if kv, ok := e.(*ast.KeyValueExpr); ok {
-						if k, ok := kv.Key.(*ast.Ident); ok {
-							assert(idents[k] == nil)
-							idents[k] = &Var{pkg: pkg, name: k.Name}
-						}
-					}
-				}
 			}
 			return true
 		})

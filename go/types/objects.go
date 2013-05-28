@@ -107,16 +107,18 @@ func (obj *TypeName) Pos() token.Pos {
 
 // A Variable represents a declared variable (including function parameters and results).
 type Var struct {
-	pkg  *Package // nil for parameters
-	name string
-	typ  Type
+	pkg     *Package // nil for parameters
+	name    string
+	typ     Type
+	FieldOf *TypeName // TODO(sqs): unexport when we can properly set FieldOf in expr.go
+	// collect_fields or something similar
 
 	visited bool // for initialization cycle detection
 	decl    interface{}
 }
 
 func NewVar(pkg *Package, name string, typ Type) *Var {
-	return &Var{pkg, name, typ, false, nil}
+	return &Var{pkg, name, typ, nil, false, nil}
 }
 
 func (obj *Var) Pkg() *Package { return obj.pkg }
@@ -156,10 +158,11 @@ type Func struct {
 	decl *ast.FuncDecl
 }
 
-func (obj *Func) Pkg() *Package { return obj.pkg }
-func (obj *Func) Scope() *Scope { panic("unimplemented") }
-func (obj *Func) Name() string  { return obj.name }
-func (obj *Func) Type() Type    { return obj.typ }
+func (obj *Func) Pkg() *Package  { return obj.pkg }
+func (obj *Func) Scope() *Scope  { panic("unimplemented") }
+func (obj *Func) Name() string   { return obj.name }
+func (obj *Func) Type() Type     { return obj.typ }
+func (obj *Func) Decl() ast.Node { return obj.decl }
 func (obj *Func) Pos() token.Pos {
 	if obj.decl != nil && obj.decl.Name != nil {
 		return obj.decl.Name.Pos()

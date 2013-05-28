@@ -73,7 +73,7 @@ func isComparable(typ Type) bool {
 		return true
 	case *Struct:
 		for _, f := range t.fields {
-			if !isComparable(f.Type) {
+			if !isComparable(f.typ) {
 				return false
 			}
 		}
@@ -131,8 +131,8 @@ func IsIdentical(x, y Type) bool {
 					g := y.fields[i]
 					if f.IsAnonymous != g.IsAnonymous ||
 						x.Tag(i) != y.Tag(i) ||
-						!f.isMatch(g.Pkg, g.Name) ||
-						!IsIdentical(f.Type, g.Type) {
+						!f.isMatch(g.pkg, g.name) ||
+						!IsIdentical(f.typ, g.typ) {
 						return false
 					}
 				}

@@ -239,6 +239,7 @@ func TestCheck(t *testing.T) {
 
 	// Otherwise, run all the tests.
 	for _, test := range tests {
+		t.Logf("test %s: %v", test.name, test.files)
 		checkFiles(t, test.name, test.files)
 	}
 }

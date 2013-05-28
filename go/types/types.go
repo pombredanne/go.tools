@@ -129,9 +129,7 @@ func (s *Slice) Elem() Type { return s.elt }
 // A Field represents a field of a struct.
 // TODO(gri): Should make this just a Var?
 type Field struct {
-	Pkg         *Package
-	Name        string
-	Type        Type
+	Var
 	IsAnonymous bool
 }
 
@@ -165,11 +163,11 @@ func (f *Field) isMatch(pkg *Package, name string) bool {
 	// "Two identifiers are different if they are spelled differently,
 	// or if they appear in different packages and are not exported.
 	// Otherwise, they are the same."
-	if name != f.Name {
+	if name != f.name {
 		return false
 	}
-	// f.Name == name
-	return ast.IsExported(name) || pkg.path == f.Pkg.path
+	// f.name == name
+	return ast.IsExported(name) || pkg.path == f.pkg.path
 }
 
 func (s *Struct) fieldIndex(pkg *Package, name string) int {

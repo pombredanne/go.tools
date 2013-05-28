@@ -50,7 +50,7 @@ func (ctxt *Context) offsetof(typ Type, index []int) int64 {
 			return -1
 		}
 		o += ctxt.offsetsof(s)[i]
-		typ = s.fields[i].Type
+		typ = s.fields[i].typ
 	}
 	return o
 }
@@ -85,7 +85,7 @@ func DefaultAlignof(typ Type) int64 {
 		// field f of x, but at least 1."
 		max := int64(1)
 		for _, f := range t.fields {
-			if a := DefaultAlignof(f.Type); a > max {
+			if a := DefaultAlignof(f.typ); a > max {
 				max = a
 			}
 		}
@@ -114,10 +114,10 @@ func DefaultOffsetsof(fields []*Field) []int64 {
 	offsets := make([]int64, len(fields))
 	var o int64
 	for i, f := range fields {
-		a := DefaultAlignof(f.Type)
+		a := DefaultAlignof(f.typ)
 		o = align(o, a)
 		offsets[i] = o
-		o += DefaultSizeof(f.Type)
+		o += DefaultSizeof(f.typ)
 	}
 	return offsets
 }
@@ -154,7 +154,7 @@ func DefaultSizeof(typ Type) int64 {
 			offsets = DefaultOffsetsof(t.fields)
 			t.offsets = offsets
 		}
-		return offsets[n-1] + DefaultSizeof(t.fields[n-1].Type)
+		return offsets[n-1] + DefaultSizeof(t.fields[n-1].typ)
 	case *Signature:
 		return DefaultPtrSize * 2
 	}

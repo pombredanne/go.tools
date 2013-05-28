@@ -259,10 +259,10 @@ func writeType(buf *bytes.Buffer, typ Type) {
 				buf.WriteString("; ")
 			}
 			if !f.IsAnonymous {
-				buf.WriteString(f.Name)
+				buf.WriteString(f.name)
 				buf.WriteByte(' ')
 			}
-			writeType(buf, f.Type)
+			writeType(buf, f.typ)
 			if tag := t.Tag(i); tag != "" {
 				fmt.Fprintf(buf, " %q", tag)
 			}

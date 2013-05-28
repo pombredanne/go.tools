@@ -460,19 +460,19 @@ func (p *gcParser) parseName(materializePkg bool) (pkg *Package, name string) {
 //
 func (p *gcParser) parseField() (*Field, string) {
 	var f Field
-	f.Pkg, f.Name = p.parseName(true)
-	f.Type = p.parseType()
+	f.pkg, f.name = p.parseName(true)
+	f.typ = p.parseType()
 	tag := ""
 	if p.tok == scanner.String {
 		tag = p.expect(scanner.String)
 	}
-	if f.Name == "" {
+	if f.name == "" {
 		// anonymous field - typ must be T or *T and T must be a type name
-		switch typ := f.Type.Deref().(type) {
+		switch typ := f.typ.Deref().(type) {
 		case *Basic: // basic types are named types
-			f.Name = typ.name
+			f.name = typ.name
 		case *Named:
-			f.Name = typ.obj.name
+			f.name = typ.obj.name
 		default:
 			p.errorf("anonymous field expected")
 		}

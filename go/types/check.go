@@ -264,10 +264,11 @@ func (check *checker) object(obj Object, cycleOk bool) {
 			case *Struct:
 				// struct fields must not conflict with methods
 				for _, f := range t.fields {
-					if m := scope.Lookup(f.Name); m != nil {
-						check.errorf(m.Pos(), "type %s has both field and method named %s", obj.Name, f.Name)
+					if m := scope.Lookup(f.name); m != nil {
+						check.errorf(m.Pos(), "type %s has both field and method named %s", obj.Name, f.name)
 						// ok to continue
 					}
+					f.FieldOf = obj
 				}
 			case *Interface:
 				// methods cannot be associated with an interface type

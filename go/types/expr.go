@@ -7,6 +7,7 @@
 package types
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"strconv"
@@ -136,6 +137,7 @@ func (check *checker) collectMethods(list *ast.FieldList) (methods ObjSet) {
 				if alt := methods.Insert(obj); alt != nil {
 					check.errorf(list.Pos(), "multiple methods named %s", name.Name)
 				}
+				check.register(name, obj)
 			}
 		} else {
 			// embedded interface
@@ -174,7 +176,7 @@ func (check *checker) collectFields(list *ast.FieldList, cycleOk bool) (fields [
 
 	var typ Type   // current field typ
 	var tag string // current field tag
-	add := func(name string, isAnonymous bool) {
+	add := func(name string, isAnonymous bool, fieldOf *TypeName, decl ast.Node, ident *ast.Ident) {
 		// TODO(gri): rethink this - at the moment we allocate only a prefix
 		if tag != "" && tags == nil {
 			tags = make([]string, len(fields))
@@ -182,7 +184,12 @@ func (check *checker) collectFields(list *ast.FieldList, cycleOk bool) (fields [
 		if tags != nil {
 			tags = append(tags, tag)
 		}
-		fields = append(fields, &Field{check.pkg, name, typ, isAnonymous})
+		v := Var{pkg: check.pkg, name: name, typ: typ, FieldOf: fieldOf, decl: decl}
+		field := &Field{v, isAnonymous}
+		fields = append(fields, field)
+		if ident != nil {
+			check.register(ident, field)
+		}
 	}
 
 	for _, f := range list.List {
@@ -191,15 +198,15 @@ func (check *checker) collectFields(list *ast.FieldList, cycleOk bool) (fields [
 		if len(f.Names) > 0 {
 			// named fields
 			for _, name := range f.Names {
-				add(name.Name, false)
+				add(name.Name, false, nil, f, name)
 			}
 		} else {
 			// anonymous field
 			switch t := typ.Deref().(type) {
 			case *Basic:
-				add(t.name, true)
+				add(t.name, true, nil, f, nil)
 			case *Named:
-				add(t.obj.name, true)
+				add(t.obj.name, true, t.Obj(), f, nil)
 			default:
 				if typ != Typ[Invalid] {
 					check.invalidAST(f.Type.Pos(), "anonymous field type %s must be named", typ)
@@ -1167,7 +1174,8 @@ func (check *checker) rawExpr(x *operand, e ast.Expr, hint Type, iota int, cycle
 					}
 					visited[i] = true
 					check.expr(x, kv.Value, nil, iota)
-					etyp := fields[i].Type
+					check.register(key, fields[i])
+					etyp := fields[i].typ
 					if !check.assignment(x, etyp) {
 						if x.mode != invalid {
 							check.errorf(x.pos(), "cannot use %s as %s value in struct literal", x, etyp)
@@ -1188,7 +1196,7 @@ func (check *checker) rawExpr(x *operand, e ast.Expr, hint Type, iota int, cycle
 						break // cannot continue
 					}
 					// i < len(fields)
-					etyp := fields[i].Type
+					etyp := fields[i].typ
 					if !check.assignment(x, etyp) {
 						if x.mode != invalid {
 							check.errorf(x.pos(), "cannot use %s as %s value in struct literal", x, etyp)
@@ -1306,6 +1314,7 @@ func (check *checker) rawExpr(x *operand, e ast.Expr, hint Type, iota int, cycle
 			goto Error
 		}
 		res := lookupField(x.typ, check.pkg, sel)
+		utyp := x.typ.Underlying()
 		if res.mode == invalid {
 			check.invalidOp(e.Pos(), "%s has no single field or method %s", x, sel)
 			goto Error
@@ -1326,6 +1335,8 @@ func (check *checker) rawExpr(x *operand, e ast.Expr, hint Type, iota int, cycle
 				params = sig.params.vars
 			}
 			x.mode = value
+			m := x.typ.Deref().(*Named).methods.Lookup(check.pkg, sel)
+			check.register(e.Sel, m)
 			x.typ = &Signature{
 				params:     NewTuple(append([]*Var{{typ: x.typ}}, params...)...),
 				results:    sig.results,
@@ -1334,6 +1345,29 @@ func (check *checker) rawExpr(x *operand, e ast.Expr, hint Type, iota int, cycle
 		} else {
 			// regular selector
 			x.mode = res.mode
+			if res.index == nil {
+				// method
+				var method Object
+				if t, ok := x.typ.Deref().(*Named); ok {
+					method = t.methods.Lookup(check.pkg, sel)
+				}
+				if method == nil {
+					if t, ok := utyp.Deref().(*Interface); ok {
+						method = t.methods.Lookup(check.pkg, sel)
+					}
+				}
+				if method != nil {
+					check.register(e.Sel, method)
+				} else if false {
+					// TODO(sqs): fix this - it occurs when we aren't propagating the methods of an embedded interface.
+					fmt.Printf("nil method: %s", e.Sel)
+				}
+			} else {
+				// field
+				if s, ok := utyp.Deref().(*Struct); ok {
+					check.register(e.Sel, s.Field(res.index[0]))
+				}
+			}
 			x.typ = res.typ
 		}
 
