@@ -10,7 +10,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // TODO(gri): Several built-ins are missing assignment checks. As a result,

@@ -11,7 +11,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // debugging support

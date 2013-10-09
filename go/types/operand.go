@@ -12,7 +12,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // An operandMode specifies the (addressing) mode of an operand.

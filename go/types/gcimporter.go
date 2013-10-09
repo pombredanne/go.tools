@@ -20,7 +20,7 @@ import (
 	"strings"
 	"text/scanner"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 var pkgExts = [...]string{".a", ".5", ".6", ".8"}

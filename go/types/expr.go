@@ -12,7 +12,7 @@ import (
 	"go/token"
 	"strconv"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // TODO(gri) Internal cleanups

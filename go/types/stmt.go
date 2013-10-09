@@ -10,7 +10,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // assigment reports whether x can be assigned to a variable of type 'to',

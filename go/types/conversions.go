@@ -9,7 +9,7 @@ package types
 import (
 	"go/ast"
 
-	"code.google.com/p/go.tools/go/exact"
+	"github.com/sourcegraph/go.tools/go/exact"
 )
 
 // conversion typechecks the type conversion conv to type typ. iota is the current
